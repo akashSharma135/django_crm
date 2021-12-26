@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 
 from accounts.decorators import admin_only, allowed_user, unauthenticated_user
 from .models import *
-from .forms import OrderForm, CreateUserForm
+from .forms import CustomerForm, OrderForm, CreateUserForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -78,6 +78,20 @@ def user_page(request):
     delieverd = orders.filter(status='Delievered').count()
     pending = orders.filter(status='Pending').count()
     return render(request=request, template_name='accounts/user.html', context={'orders': orders, 'total_orders': total_orders, 'delievered': delieverd, 'pending': pending})
+
+
+@login_required(login_url='login')
+@allowed_user(allowed_roles=['customer'])
+def account_settings(request):
+    customer = request.user.customer
+    form = CustomerForm(instance=customer)
+
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, request.FILES, instance=customer)
+        if form.is_valid():
+            form.save()
+    return render(request=request, template_name='accounts/account_settings.html', context={'form': form})
+
 
 @login_required(login_url='login')
 @allowed_user(allowed_roles=['admin'])
